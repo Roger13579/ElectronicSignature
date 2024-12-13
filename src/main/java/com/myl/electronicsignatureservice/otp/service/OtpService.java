@@ -2,7 +2,7 @@ package com.myl.electronicsignatureservice.otp.service;
 
 public interface OtpService {
 
-    public String generateOtp();
+    String generateOtp();
 
-    public boolean verifyOtp(String otp);
+    boolean verifyOtp(String otp);
 }
