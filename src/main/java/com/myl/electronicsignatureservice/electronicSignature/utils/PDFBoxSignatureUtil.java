@@ -96,7 +96,7 @@ public class PDFBoxSignatureUtil implements SignatureInterface {
         }
 
         @Override
-        public void write(OutputStream out) throws IOException, CMSException {
+        public void write(OutputStream out) throws IOException {
             byte[] buffer = new byte[8192];
             int read;
             while ((read = in.read(buffer)) != -1) {
@@ -133,7 +133,6 @@ public class PDFBoxSignatureUtil implements SignatureInterface {
 
         // Get the response
         InputStream in = connection.getInputStream();
-        TimeStampResponse tsResponse = new TimeStampResponse(in);
-        return tsResponse;
+        return new TimeStampResponse(in);
     }
 }

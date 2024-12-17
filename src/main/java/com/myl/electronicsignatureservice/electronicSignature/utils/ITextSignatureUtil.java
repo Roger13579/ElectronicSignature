@@ -31,6 +31,7 @@ public class ITextSignatureUtil {
         PrivateKey privateKey = (PrivateKey) keyStore.getKey(alias, keystorePsd);
         Certificate[] certificateChain = keyStore.getCertificateChain(alias);
 
+        this.signatureFieldName = signatureFieldName;
         this.privateKey = privateKey;
         this.digestAlgorithm = digestAlgorithm;
         this.bouncyCastleProvider = bouncyCastleProvider.getName();

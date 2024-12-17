@@ -11,9 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.*;
-import java.security.*;
-
 @Slf4j
 @Controller
 @RequestMapping("/signature")
@@ -23,10 +20,8 @@ public class ElectronicSignatureController {
     private final SignatureService pdfBoxSignatureService;
     private final SignatureService iTextSignatureService;
 
-    private final AppProperties appProperties;
-
     @PostMapping("/sign/pdfBox")
-    public ResponseEntity<PayloadResponse> signByPDFBox(@RequestBody PayloadRequest request){
+    public ResponseEntity<PayloadResponse> signByPDFBox(@RequestBody PayloadRequest request) throws Exception {
         PayloadResponse response = pdfBoxSignatureService.getSignedDocument(request);
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_JSON)
@@ -34,7 +29,7 @@ public class ElectronicSignatureController {
     }
 
     @PostMapping("/sign/iText")
-    public ResponseEntity<PayloadResponse> signByIText(@RequestBody PayloadRequest request){
+    public ResponseEntity<PayloadResponse> signByIText(@RequestBody PayloadRequest request) throws Exception {
         PayloadResponse response = iTextSignatureService.getSignedDocument(request);
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_JSON)
