@@ -1,0 +1,139 @@
+package com.myl.electronicsignatureservice.electronicSignature.utils;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.pdfbox.pdmodel.interactive.digitalsignature.SignatureInterface;
+import org.bouncycastle.asn1.ASN1EncodableVector;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
+import org.bouncycastle.asn1.ASN1Primitive;
+import org.bouncycastle.asn1.DERSet;
+import org.bouncycastle.asn1.cms.Attribute;
+import org.bouncycastle.asn1.cms.AttributeTable;
+import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
+import org.bouncycastle.cert.jcajce.JcaCertStore;
+import org.bouncycastle.cms.*;
+import org.bouncycastle.cms.jcajce.JcaSignerInfoGeneratorBuilder;
+import org.bouncycastle.operator.ContentSigner;
+import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
+import org.bouncycastle.tsp.*;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.security.KeyStore;
+import java.security.MessageDigest;
+import java.security.PrivateKey;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
+import java.util.Arrays;
+
+@Slf4j
+@RequiredArgsConstructor
+public class PDFBoxSignatureUtil implements SignatureInterface {
+    private final PrivateKey privateKey;
+    private final Certificate[] certificateChain;
+    private final String tsaUrl;
+
+    public PDFBoxSignatureUtil(KeyStore keystore, String alias, String keyPassword, String tsaUrl) throws Exception {
+        this.tsaUrl = tsaUrl;
+        privateKey = (PrivateKey) keystore.getKey(alias, keyPassword.toCharArray());
+        certificateChain = keystore.getCertificateChain(alias);
+    }
+    @Override
+    public byte[] sign(InputStream content) throws IOException {
+        try {
+            CMSSignedDataGenerator generator = new CMSSignedDataGenerator();
+            ContentSigner contentSigner = new JcaContentSignerBuilder("SHA256withECDSA").build(privateKey);
+            generator.addSignerInfoGenerator(new JcaSignerInfoGeneratorBuilder(
+                    new JcaDigestCalculatorProviderBuilder().build())
+                    .build(contentSigner, (X509Certificate) certificateChain[0]));
+            generator.addCertificates(new JcaCertStore(Arrays.asList(certificateChain)));
+            CMSTypedData cmsData = new CMSTypedDataInputStream(content);
+            CMSSignedData signedData = generator.generate(cmsData, false);
+            SignerInformation signerInformation = signedData.getSignerInfos().getSigners().iterator().next();
+            byte[] signature = signerInformation.getSignature();
+            log.info("Generated signature. Length: {}", signature.length);
+
+            TimeStampToken tsToken = sendTimestampRequest(signature);
+            if (tsToken == null) {
+                log.info("TimeStampToken is null. This should not happen if the response was validated successfully.");
+                throw new IOException("Failed to get TimeStampToken from TSA response");
+            }
+
+            ASN1EncodableVector v = new ASN1EncodableVector();
+            v.add(new Attribute(PKCSObjectIdentifiers.id_aa_signatureTimeStampToken, new DERSet(ASN1Primitive.fromByteArray(tsToken.getEncoded()))));
+            signerInformation = SignerInformation.replaceUnsignedAttributes(signerInformation, new AttributeTable(v));
+
+            SignerInformationStore signerStore = new SignerInformationStore(signerInformation);
+            signedData = CMSSignedData.replaceSigners(signedData, signerStore);
+
+            log.info("Signing process completed successfully.");
+            return signedData.getEncoded();
+        } catch (Exception e) {
+            throw new IOException(e);
+        }
+    }
+
+    // Helper class to make InputStream work with CMSTypedData
+    static class CMSTypedDataInputStream implements CMSTypedData {
+        private final InputStream in;
+
+        public CMSTypedDataInputStream(InputStream is) {
+            in = is;
+        }
+
+        @Override
+        public ASN1ObjectIdentifier getContentType() {
+            return new ASN1ObjectIdentifier("1.2.840.113549.1.7.1"); // OID for data
+        }
+
+        @Override
+        public Object getContent() {
+            return in;
+        }
+
+        @Override
+        public void write(OutputStream out) throws IOException, CMSException {
+            byte[] buffer = new byte[8192];
+            int read;
+            while ((read = in.read(buffer)) != -1) {
+                out.write(buffer, 0, read);
+            }
+            in.close();
+        }
+    }
+    private TimeStampToken sendTimestampRequest(byte[] signatureBytes) throws Exception {
+        // Timestamp logic here (connect to the TSA and request a timestamp token)
+        TimeStampRequestGenerator tsRequestGen = new TimeStampRequestGenerator();
+        tsRequestGen.setCertReq(true);
+        byte[] digest = MessageDigest.getInstance("SHA-256").digest(signatureBytes);
+        TimeStampRequest tsRequest = tsRequestGen.generate(TSPAlgorithms.SHA256, digest);
+        TimeStampResponse tsResponse = getTimeStampResponse(tsRequest);
+        tsResponse.validate(tsRequest);
+
+        // Return the timestamp token
+        return tsResponse.getTimeStampToken();
+    }
+
+    private TimeStampResponse getTimeStampResponse(TimeStampRequest tsRequest) throws IOException, TSPException {
+        byte[] requestBytes = tsRequest.getEncoded();
+
+        // Send the request to the TSA
+        URL url = new URL(tsaUrl);
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setDoOutput(true);
+        connection.setRequestMethod("POST");
+        connection.setRequestProperty("Content-Type", "application/timestamp-query");
+        OutputStream out = connection.getOutputStream();
+        out.write(requestBytes);
+        out.close();
+
+        // Get the response
+        InputStream in = connection.getInputStream();
+        TimeStampResponse tsResponse = new TimeStampResponse(in);
+        return tsResponse;
+    }
+}
