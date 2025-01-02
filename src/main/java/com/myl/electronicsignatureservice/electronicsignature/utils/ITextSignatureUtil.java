@@ -1,4 +1,4 @@
-package com.myl.electronicsignatureservice.electronicSignature.utils;
+package com.myl.electronicsignatureservice.electronicsignature.utils;
 
 import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.StampingProperties;

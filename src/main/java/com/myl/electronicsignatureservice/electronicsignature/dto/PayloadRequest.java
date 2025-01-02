@@ -1,4 +1,4 @@
-package com.myl.electronicsignatureservice.electronicSignature.dto;
+package com.myl.electronicsignatureservice.electronicsignature.dto;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;

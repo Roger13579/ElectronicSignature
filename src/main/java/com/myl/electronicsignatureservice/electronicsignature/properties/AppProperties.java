@@ -1,4 +1,4 @@
-package com.myl.electronicsignatureservice.electronicSignature.properties;
+package com.myl.electronicsignatureservice.electronicsignature.properties;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

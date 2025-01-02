@@ -1,3 +1,4 @@
 package com.myl.electronicsignatureservice.otp.event;
 
-public record SendOtpEvent(String email, String otp){}
+public record SendOtpEvent(String email, String otp){
+}

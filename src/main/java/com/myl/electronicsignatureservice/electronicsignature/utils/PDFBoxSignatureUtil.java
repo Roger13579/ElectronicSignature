@@ -1,5 +1,6 @@
-package com.myl.electronicsignatureservice.electronicSignature.utils;
+package com.myl.electronicsignatureservice.electronicsignature.utils;
 
+import com.myl.electronicsignatureservice.electronicsignature.service.TimeStampService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.interactive.digitalsignature.SignatureInterface;
@@ -21,10 +22,7 @@ import org.bouncycastle.tsp.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.security.KeyStore;
-import java.security.MessageDigest;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
@@ -36,6 +34,7 @@ public class PDFBoxSignatureUtil implements SignatureInterface {
     private final PrivateKey privateKey;
     private final Certificate[] certificateChain;
     private final String tsaUrl;
+    private TimeStampService timeStampService;
 
     public PDFBoxSignatureUtil(KeyStore keystore, String alias, String keyPassword, String tsaUrl) throws Exception {
         this.tsaUrl = tsaUrl;
@@ -57,7 +56,7 @@ public class PDFBoxSignatureUtil implements SignatureInterface {
             byte[] signature = signerInformation.getSignature();
             log.info("Generated signature. Length: {}", signature.length);
 
-            TimeStampToken tsToken = sendTimestampRequest(signature);
+            TimeStampToken tsToken = timeStampService.getTimestamp(signature, tsaUrl);
             if (tsToken == null) {
                 log.info("TimeStampToken is null. This should not happen if the response was validated successfully.");
                 throw new IOException("Failed to get TimeStampToken from TSA response");
@@ -104,35 +103,5 @@ public class PDFBoxSignatureUtil implements SignatureInterface {
             }
             in.close();
         }
-    }
-    private TimeStampToken sendTimestampRequest(byte[] signatureBytes) throws Exception {
-        // Timestamp logic here (connect to the TSA and request a timestamp token)
-        TimeStampRequestGenerator tsRequestGen = new TimeStampRequestGenerator();
-        tsRequestGen.setCertReq(true);
-        byte[] digest = MessageDigest.getInstance("SHA-256").digest(signatureBytes);
-        TimeStampRequest tsRequest = tsRequestGen.generate(TSPAlgorithms.SHA256, digest);
-        TimeStampResponse tsResponse = getTimeStampResponse(tsRequest);
-        tsResponse.validate(tsRequest);
-
-        // Return the timestamp token
-        return tsResponse.getTimeStampToken();
-    }
-
-    private TimeStampResponse getTimeStampResponse(TimeStampRequest tsRequest) throws IOException, TSPException {
-        byte[] requestBytes = tsRequest.getEncoded();
-
-        // Send the request to the TSA
-        URL url = new URL(tsaUrl);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setDoOutput(true);
-        connection.setRequestMethod("POST");
-        connection.setRequestProperty("Content-Type", "application/timestamp-query");
-        OutputStream out = connection.getOutputStream();
-        out.write(requestBytes);
-        out.close();
-
-        // Get the response
-        InputStream in = connection.getInputStream();
-        return new TimeStampResponse(in);
     }
 }

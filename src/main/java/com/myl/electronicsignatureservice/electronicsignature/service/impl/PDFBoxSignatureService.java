@@ -1,9 +1,10 @@
-package com.myl.electronicsignatureservice.electronicSignature.service;
+package com.myl.electronicsignatureservice.electronicsignature.service.impl;
 
-import com.myl.electronicsignatureservice.electronicSignature.dto.PayloadRequest;
-import com.myl.electronicsignatureservice.electronicSignature.dto.PayloadResponse;
-import com.myl.electronicsignatureservice.electronicSignature.properties.AppProperties;
-import com.myl.electronicsignatureservice.electronicSignature.utils.PDFBoxSignatureUtil;
+import com.myl.electronicsignatureservice.electronicsignature.dto.PayloadRequest;
+import com.myl.electronicsignatureservice.electronicsignature.dto.PayloadResponse;
+import com.myl.electronicsignatureservice.electronicsignature.properties.AppProperties;
+import com.myl.electronicsignatureservice.electronicsignature.service.SignatureService;
+import com.myl.electronicsignatureservice.electronicsignature.utils.PDFBoxSignatureUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;

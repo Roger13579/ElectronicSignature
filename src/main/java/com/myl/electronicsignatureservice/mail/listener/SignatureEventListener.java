@@ -8,8 +8,8 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class SignatureEventListener {
 
-    @EventListener
-    public void receivedAndSendEmail(){
-
-    }
+//    @EventListener
+//    public void receivedAndSendEmail(){
+//
+//    }
 }
