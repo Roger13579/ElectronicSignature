@@ -7,14 +7,13 @@ import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.Bean;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import javax.crypto.SecretKey;
 import java.security.Key;
 import java.util.Calendar;
 import java.util.Map;
@@ -42,19 +41,18 @@ public class JwtService {
         claims.put("username", userDetails.getUsername());
         Key secretKey = Keys.hmacShaKeyFor(KEY.getBytes());
         return Jwts.builder()
-                .setClaims(claims)
+                .claims(claims)
                 .signWith(secretKey)
                 .compact();
     }
 
     public Map<String, Object> parseToken(String token){
-        Key secretKey = Keys.hmacShaKeyFor(KEY.getBytes());
+        SecretKey secretKey = Keys.hmacShaKeyFor(KEY.getBytes());
         JwtParser parser = Jwts.parser()
-                .setSigningKey(secretKey)
+                .verifyWith(secretKey)
                 .build();
-        Claims claims = parser
-                .parseClaimsJws(token)
-                .getBody();
+        Claims claims = (Claims) parser
+                .parseEncryptedClaims(token);
         return claims.entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }

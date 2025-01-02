@@ -3,7 +3,6 @@ package com.myl.electronicsignatureservice.auth.service;
 import com.myl.electronicsignatureservice.auth.dao.UserDao;
 import com.myl.electronicsignatureservice.auth.entity.User;
 import com.myl.electronicsignatureservice.auth.model.SecureUser;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
