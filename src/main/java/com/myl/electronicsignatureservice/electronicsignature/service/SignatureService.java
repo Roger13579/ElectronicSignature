@@ -1,10 +1,9 @@
 package com.myl.electronicsignatureservice.electronicsignature.service;
 
-import com.myl.electronicsignatureservice.electronicsignature.dto.PayloadRequest;
-import com.myl.electronicsignatureservice.electronicsignature.dto.PayloadResponse;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface SignatureService {
 
-    PayloadResponse getSignedDocument(PayloadRequest request) throws Exception;
-
+    byte[] getSignedDocument(byte[] unsignFile) throws Exception;
+    byte[] getUnsignFile(String fileId) throws Exception;
 }

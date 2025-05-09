@@ -14,30 +14,33 @@ import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.bouncycastle.cert.jcajce.JcaCertStore;
 import org.bouncycastle.cms.*;
 import org.bouncycastle.cms.jcajce.JcaSignerInfoGeneratorBuilder;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
 import org.bouncycastle.tsp.*;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.KeyStore;
 import java.security.PrivateKey;
+import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 
 @Slf4j
-@RequiredArgsConstructor
 public class PDFBoxSignatureUtil implements SignatureInterface {
     private final PrivateKey privateKey;
     private final Certificate[] certificateChain;
     private final String tsaUrl;
-    private TimeStampService timeStampService;
+    private final TimeStampService timeStampService;
 
-    public PDFBoxSignatureUtil(KeyStore keystore, String alias, String keyPassword, String tsaUrl) throws Exception {
+    public PDFBoxSignatureUtil(KeyStore keystore, String alias, String keyPassword, String tsaUrl, TimeStampService timeStampService) throws Exception {
         this.tsaUrl = tsaUrl;
+        this.timeStampService = timeStampService;
         privateKey = (PrivateKey) keystore.getKey(alias, keyPassword.toCharArray());
         certificateChain = keystore.getCertificateChain(alias);
     }
@@ -45,7 +48,8 @@ public class PDFBoxSignatureUtil implements SignatureInterface {
     public byte[] sign(InputStream content) throws IOException {
         try {
             CMSSignedDataGenerator generator = new CMSSignedDataGenerator();
-            ContentSigner contentSigner = new JcaContentSignerBuilder("SHA256withECDSA").build(privateKey);
+            Security.addProvider(new BouncyCastleProvider());
+            ContentSigner contentSigner = new JcaContentSignerBuilder("SHA256withRSA").setProvider("BC").build(privateKey);
             generator.addSignerInfoGenerator(new JcaSignerInfoGeneratorBuilder(
                     new JcaDigestCalculatorProviderBuilder().build())
                     .build(contentSigner, (X509Certificate) certificateChain[0]));
