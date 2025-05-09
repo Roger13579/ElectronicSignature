@@ -10,19 +10,8 @@ import java.util.concurrent.CompletableFuture;
  */
 @Getter
 public class OtpVerificationEvent {
-    /**
-     * The OTP to verify
-     */
     private final String otp;
-    
-    /**
-     * The mail associated with the OTP
-     */
     private final String email;
-    
-    /**
-     * The future that will be completed with the verification result
-     */
     private final CompletableFuture<Boolean> resultFuture = new CompletableFuture<>();
     
     public OtpVerificationEvent(String otp, String email) {

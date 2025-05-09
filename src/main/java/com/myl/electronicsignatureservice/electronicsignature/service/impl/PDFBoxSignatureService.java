@@ -1,7 +1,5 @@
 package com.myl.electronicsignatureservice.electronicsignature.service.impl;
 
-import com.myl.electronicsignatureservice.electronicsignature.dto.SignRequest;
-import com.myl.electronicsignatureservice.electronicsignature.dto.SignResponse;
 import com.myl.electronicsignatureservice.electronicsignature.model.FileData;
 import com.myl.electronicsignatureservice.electronicsignature.properties.AppProperties;
 import com.myl.electronicsignatureservice.electronicsignature.repository.SignatureRepository;
@@ -13,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.interactive.digitalsignature.PDSignature;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.security.KeyStore;

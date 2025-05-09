@@ -9,9 +9,6 @@ import lombok.Data;
  */
 @Data
 public class SendOtpRequest {
-    /**
-     * The mail associated with the OTP
-     */
     @Email(message = "Invalid email format")
     private String mail;
 }
